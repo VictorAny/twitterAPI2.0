@@ -15,6 +15,7 @@ public class TwitterAPI2Servlet extends HttpServlet {
 		
 		resp.setContentType("text/plain");
 		//This then just prints hello world.
+		//getWriter() function writes to the web page. This will be how you return information
 		resp.getWriter().println("Hello, Twitter 2.0!");
 	}
 }
