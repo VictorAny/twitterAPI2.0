@@ -41,11 +41,11 @@ public class UserServlet extends TwitterAPI2Servlet{
 		}else{
 			//Uncommet if your datastore is empty.
 			//Reminder you can view your datastore at http:localhost:xxxx/_ah/admin where xxxx is your port
-//			Entity testEnt = new Entity("User", "123");
-//			testEnt.setProperty("name", "Victor");
-//			testEnt.setProperty("userName", "Coldsoldier");
-//			testEnt.setProperty("user_id", 12432);
-//			datastore.put(testEnt);
+			Entity testEnt = new Entity("User");
+			testEnt.setProperty("name", "Victor");
+			testEnt.setProperty("userName", "Coldsoldier");
+			testEnt.setProperty("user_id", 12432);
+			datastore.put(testEnt);
 			this.writeErrorResponse(response, "Error no user ID found");
 		}
 	}
@@ -56,9 +56,38 @@ public class UserServlet extends TwitterAPI2Servlet{
 		//based on our keys
 		HashMap<String, Object> requestDict = this.getRequestBodyMap(request);
 		//Take it away!
-		String requestParam = (String)requestDict.get("name");
+		//String requestParam = (String)requestDict.get("name");
 		
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+	
+		boolean isValid = true;
 		
+		String[] requestParam = new String [4];
+		requestParam [0] = (String)requestDict.get("name");
+		requestParam [1] = (String)requestDict.get("userHandler");
+		requestParam [2] = (String)requestDict.get("user_id");
+		requestParam [3] = (String)requestDict.get("postCount");
+		
+		Entity user = new Entity ("User");
+		for (int i = 0; i < requestParam.length; ++i)
+		{
+			if (requestParam [i] == null)
+			{
+				isValid = false;
+				break;
+			}
+		}
+		if (isValid)
+		{
+		user.setProperty("name", requestParam[0]);
+		user.setProperty("userHandler", requestParam[1]);
+		user.setProperty("user_id", requestParam[2]);
+		user.setProperty("postCount", requestParam[3]);
+		datastore.put(user);
+		this.writeSucessfulResponse(response, "user created!");
+		}
+		else
+			this.writeErrorResponse(response, "invalid data entry");
 	}
 	
 
