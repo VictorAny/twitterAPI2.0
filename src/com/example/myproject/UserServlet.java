@@ -1,16 +1,18 @@
 package com.example.myproject;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import com.google.appengine.api.datastore.DatastoreService;
+import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import java.util.*;
-import java.io.*;
-import java.lang.reflect.Type;
 
 @SuppressWarnings("serial")
-public class UserServlet extends HttpServlet {
+public class UserServlet extends TwitterAPI2Servlet{
 //	private static final long serialVersionUID = 1L;
 
     public UserServlet() {
@@ -18,67 +20,37 @@ public class UserServlet extends HttpServlet {
     }
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-//		This is how you return json.
-// 		Uncomment to see it in action.
-//		Map<String, String> myHash = new HashMap<String,String>();
-//		myHash.put("name", "Victor");
-//		Gson gson = new Gson();
-		// gson.toJson() converts the object to json and returns a string.
-//		String returnObj = gson.toJson(myHash);
-		// Then we just write said string. 
-//		response.getWriter().println(returnObj);
-		
-	}
+		DatastoreService datastore =
+                DatastoreServiceFactory.getDatastoreService();
+		String userID = request.getQueryString();
+		if (userID != null){
+			response.setContentType("application/json");
+			Key userKey = KeyFactory.createKey("User", userID);
+			Entity userProfile;
+			try {
+				userProfile = datastore.get(userKey);
+				response.getWriter().println("User found.");
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+			} catch (EntityNotFoundException e) {
+				response.getWriter().println("User does not exist");
+			}
+		}else{
+			this.writeErrorResponse(response, "Error no user ID found");
+		}
+	}
+		
+
+	public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		//First thing we'll do is convert the requestBody to JSON dictionary so we can query
 		//based on our keys
-		HashMap requestDict = this.getRequestBodyMap(request);
+		HashMap<String, Object> requestDict = this.getRequestBodyMap(request);
 		//Take it away!
+		String requestParam = (String)requestDict.get("name");
 		
 		
 	}
 	
-	public HashMap<String, String> getRequestBodyMap(HttpServletRequest request) throws IOException{
-		Gson gson = new Gson();
-		String stringBody = this.getBody(request);
-		Type jsonType = new TypeToken<HashMap<String, String>>(){}.getType();
-		HashMap<String, String> myMap = gson.fromJson(stringBody, jsonType);
-		return myMap;
-	}
+
 	
-	public String getBody(HttpServletRequest request) throws IOException {
-
-	    String body = null;
-	    StringBuilder stringBuilder = new StringBuilder();
-	    BufferedReader bufferedReader = null;
-
-	    try {
-	        InputStream inputStream = request.getInputStream();
-	        if (inputStream != null) {
-	            bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-	            char[] charBuffer = new char[128];
-	            int bytesRead = -1;
-	            while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
-	                stringBuilder.append(charBuffer, 0, bytesRead);
-	            }
-	        } else {
-	            stringBuilder.append("");
-	        }
-	    } catch (IOException ex) {
-	        throw ex;
-	    } finally {
-	        if (bufferedReader != null) {
-	            try {
-	                bufferedReader.close();
-	            } catch (IOException ex) {
-	                throw ex;
-	            }
-	        }
-	    }
-
-	    body = stringBuilder.toString();
-	    return body;
-	}
 
 }
