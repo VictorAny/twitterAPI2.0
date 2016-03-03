@@ -10,13 +10,13 @@
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
   <servlet>
-    <description>Sample Servlet</description>
-    <display-name>TwitterAPI2Servlet</display-name>
-    <servlet-name>TwitterAPI2Servlet</servlet-name>
-    <servlet-class>com.example.myproject.TwitterAPI2Servlet</servlet-class>
+    <description></description>
+    <display-name>UserServlet</display-name>
+    <servlet-name>UserServlet</servlet-name>
+    <servlet-class>com.example.myproject.UserServlet</servlet-class>
   </servlet>
   <servlet-mapping>
-    <servlet-name>TwitterAPI2Servlet</servlet-name>
-    <url-pattern>/twitterapi2</url-pattern>
+    <servlet-name>UserServlet</servlet-name>
+    <url-pattern>/user</url-pattern>
   </servlet-mapping>
 </web-app>
