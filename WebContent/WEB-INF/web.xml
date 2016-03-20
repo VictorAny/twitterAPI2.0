@@ -29,4 +29,14 @@
     <servlet-name>MessageServlet</servlet-name>
     <url-pattern>/message</url-pattern>
   </servlet-mapping>
+  <servlet>
+    <description></description>
+    <display-name>CreateMessageServlet</display-name>
+    <servlet-name>CreateMessageServlet</servlet-name>
+    <servlet-class>com.example.myproject.CreateMessageServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>CreateMessageServlet</servlet-name>
+    <url-pattern>/createMessage</url-pattern>
+  </servlet-mapping>
 </web-app>
