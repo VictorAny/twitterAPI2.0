@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>CreateMessage</title>
+</head>
+<body>
+
+	<h1>Create New Message</h1>
+	
+	<form action="/createMessage" method="post">
+		
+		<table>
+			<tr>
+				<td> User Name: </td>
+				<td> <input type="text" name="user_id" placeholder="User Name"> </td>
+			</tr>
+			<tr>
+				<td> Message(141 Char Max): </td>
+				<td> <input type="text" name="text" maxlength="141"> </td>
+			</tr>
+			<tr>
+				<td> Tags: </td>
+				<td> <input type=text name="tags"> </td>
+			</tr>
+				
+		</table>
+		
+		<input type="submit" value="Create Message">
+		
+	</form>
+
+	<br>
+	<a href="index.html">Return to Main Page</a>
+
+</body>
+</html>
