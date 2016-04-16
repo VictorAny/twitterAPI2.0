@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.appengine.api.datastore.DatastoreFailureException;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -20,11 +21,18 @@ import com.google.appengine.api.datastore.KeyFactory;
  */
 public class LikesServlet extends TwitterAPI2Servlet {
 	private static final long serialVersionUID = 1L;
-	private String EntityKind = "Post";
+	private String PostEntity = "Post";
+	private String UserEntity = "User";
 	private String messageIDParam = "messageID";
 	private String userIDParam = "user_id";
+	private String userHandlerParam = "userHandler";
 	private String likesParam = "likes";
 	private String valueParam = "value";
+	
+	private String userHandler;
+	private String userID;
+	private int likesCount;
+	private boolean isLike;
 	
     public LikesServlet() {
         super();
@@ -41,36 +49,69 @@ public class LikesServlet extends TwitterAPI2Servlet {
         
         // retrieve parameters
         String postID = (String)requestDic.get(this.messageIDParam);
-        String user = (String)requestDic.get(this.userIDParam);
+        /*String*/ userID = (String)requestDic.get(this.userIDParam);
         String likesInputValue = (String)requestDic.get(this.valueParam);
         
-        // create Key based on messageID and retrieve Post Entity
-        long uniqueId = Long.parseLong(postID);
-        Key messageKey = KeyFactory.createKey(this.EntityKind, uniqueId);
-        Entity post;
-            
-        // check if message exists
-        try {
-            post = datastore.get(messageKey);
-                
+        // create Key based on messageID
+        Key messageKey = KeyFactory.createKey(this.PostEntity, postID);
+        
+        // retrieve Post Entity; check if message exists
+		try {
+			Entity post = datastore.get(messageKey);
+            /*int*/ likesCount = (int) post.getProperty(this.likesParam);
+        	
             // update likesCount for specific post 
-            int likesCount = (int) post.getProperty(this.likesParam);
-            boolean isLike = checkInput(likesInputValue);
+            /*boolean*/ isLike = checkInput(likesInputValue);
             updateLikes(likesCount,isLike);
 
             post.setProperty(this.likesParam, likesCount);
             datastore.put(post);
+        } catch (EntityNotFoundException e1) {
+            this.writeErrorResponse(response, ": message does not exist");
+        } catch (IllegalArgumentException e2) {
+        	this.writeErrorResponse(response, ": invalid message key");
+        } catch (DatastoreFailureException e3) {
+        	this.writeErrorResponse(response, ": datastore error");
+        } // end of check message exists
+          
+        /* write back success message */
+        // get user name
+        Key userKey = KeyFactory.createKey(UserEntity, userID);
             
-            if (isLike)
-            	this.writeSucessfulResponse(response, user + " likes!");
-            else
-            	this.writeSucessfulResponse(response, user + " unlikes!");
-                
-            } catch (EntityNotFoundException e) {
-                this.writeErrorResponse(response, "Error, message does not exist");
-            }
+        boolean fetchedUser = false;
+		try {
+			Entity userProfile = datastore.get(userKey);
+			/*String*/ userHandler = (String)userProfile.getProperty(this.userHandlerParam);
+			fetchedUser = true;
+        } catch (EntityNotFoundException e1) {
+            this.writeErrorResponse(response, ": fetching user");
+        } catch (IllegalArgumentException e2) {
+        	this.writeErrorResponse(response, ": invalid user key");
+        } catch (DatastoreFailureException e3) {
+        	this.writeErrorResponse(response, ": datastore error");
+        } // end of check user retrieval 
+		
+        // display <user name/ID> (un)likes
+		String user = userIdentifier (fetchedUser);
+		displaySuccessMessage (response, user);
     }
-    
+    	
+	public String userIdentifier (boolean b)
+	{		
+		if (b)
+			return userHandler;
+		else
+			return userID;
+	}
+	
+	public void displaySuccessMessage (HttpServletResponse resp, String usr)
+	{
+		if (isLike)
+			this.writeSucessfulResponse(resp, usr + " likes!");
+		else
+			this.writeSucessfulResponse(resp, usr + " unlikes!");
+	}
+	
     public boolean checkInput (String param)
     {
         if (param.equalsIgnoreCase("LIKE"))
