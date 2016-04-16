@@ -1,6 +1,7 @@
 package com.example.myproject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.servlet.ServletException;
@@ -11,6 +12,13 @@ import javax.servlet.http.HttpServletResponse;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.PreparedQuery;
+import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.Filter;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.appengine.api.datastore.Query.FilterOperator;
+
+import com.google.gson.Gson;
 
 /**
  * Servlet implementation class MessageServlet
@@ -32,6 +40,65 @@ public class MessageServlet extends TwitterAPI2Servlet {
 		//Search the datastore for the ID
 		//If ID is found, write out the information with a sucessful response
 		// else write an error resposne
+		DatastoreService datastore = 
+                DatastoreServiceFactory.getDatastoreService();
+		response.setContentType("application/json");
+		
+		//Temp. Format Used by the Request Sent by MessageSearch.html
+		//Finalize later
+		String searchTags = request.getParameter("searchByTag");
+		String searchName = request.getParameter("searchByName");
+		
+		if (searchTags == null || searchName == null){
+			this.writeErrorResponse(response, "Failed");
+			return;
+		}
+		
+		Gson g = new Gson();
+		
+		
+		Query q;
+		ArrayList<String> returnString = new ArrayList<String>();
+		String jsonReturn = "";
+		boolean fail = true;
+		
+		//if there was a user_id in the query, first filter out all posts NOT made by that user
+		if(!searchName.isEmpty())
+		{
+			Filter byName = new FilterPredicate("user_id",FilterOperator.EQUAL,searchName);
+			q = new Query("Post").setFilter(byName);
+		}
+		else//no user specified, search all posts
+		{
+			q = new Query("Post");
+		}
+		PreparedQuery pq = datastore.prepare(q);
+
+		//further filter the posts by tag
+		//return the Json versions of found posts
+		for(Entity result : pq.asIterable())
+		{
+
+				ArrayList<String> tags = (ArrayList<String>) result.getProperty("tags");
+				if(searchTags.isEmpty() || tags.contains(searchTags))
+				{
+					fail = false;
+					String userName = (String) result.getProperty("user_id");
+					String msg = (String) result.getProperty("text");
+					returnString.add(userName);
+					returnString.add(msg);
+					jsonReturn = jsonReturn + g.toJson(result.getProperties());
+					String toJ = g.toJson(result.getProperties());
+					response.getWriter().println(toJ);
+				}
+
+		}
+
+		//No Posts found
+		if(fail)
+		{
+			response.getWriter().println("No Messages with That Tag/Username");
+		}
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

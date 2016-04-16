@@ -29,4 +29,14 @@
     <servlet-name>MessageServlet</servlet-name>
     <url-pattern>/message</url-pattern>
   </servlet-mapping>
+  <servlet>
+    <description></description>
+    <display-name>LikesServlet</display-name>
+    <servlet-name>LikesServlet</servlet-name>
+    <servlet-class>com.example.myproject.LikesServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>LikesServlet</servlet-name>
+    <url-pattern>/likes</url-pattern>
+  </servlet-mapping>
 </web-app>
