@@ -49,10 +49,10 @@ public class MessageServlet extends TwitterAPI2Servlet {
 		requestParam [0] = (String)requestDic.get(this.POSTmessageUserIDParam);
 		requestParam [1] = (String)requestDic.get(this.POSTmessageTextParam);
 				
-		String uniqueId = Long.toString(datastore.allocateIds(this.EntityKind, 1).getStart().getId());
+		long uniqueId = datastore.allocateIds(this.EntityKind, 1).getStart().getId();
 				
 		int likesCount = 0;
-		Entity post = new Entity (this.EntityKind, uniqueId);
+		Entity post = new Entity (this.EntityKind);
 		for (int i = 0; i < requestParam.length; ++i)
 		{
 			if (requestParam [i] == null)

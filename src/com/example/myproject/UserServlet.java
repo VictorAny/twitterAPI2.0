@@ -47,11 +47,10 @@ public class UserServlet extends TwitterAPI2Servlet{
 		}else{
 			//Uncomment if your datastore is empty.
 			//Reminder you can view your datastore at http:localhost:xxxx/_ah/admin where xxxx is your port
-			String uniqueId = "12432";
-			Entity testEnt = new Entity(UserServlet.UserType, uniqueId);
+			Entity testEnt = new Entity(UserServlet.UserType);
 			testEnt.setProperty(UserServlet.nameParam, "Victor");
 			testEnt.setProperty(UserServlet.userHandlerParam , "Coldsoldier");
-			testEnt.setProperty(UserServlet.userIDParam, uniqueId);
+			testEnt.setProperty(UserServlet.userIDParam, 12432);
 			datastore.put(testEnt);
 			this.writeErrorResponse(response, "Error no user ID found");
 		}
@@ -73,10 +72,10 @@ public class UserServlet extends TwitterAPI2Servlet{
 		requestParam [0] = (String)requestDict.get(UserServlet.nameParam);
 		requestParam [1] = (String)requestDict.get(UserServlet.userHandlerParam);
 		// Creates unique ID from database. 
-		String uniqueId = Long.toString(datastore.allocateIds(UserServlet.UserType, 1).getStart().getId());
+		long uniqueId = datastore.allocateIds(UserServlet.UserType, 1).getStart().getId();
 		// A newly created user will have no posts hence the postCount is 0.
 		int postCount = 0;
-		Entity user = new Entity (UserServlet.UserType, uniqueId);
+		Entity user = new Entity (UserServlet.UserType);
 		for (int i = 0; i < requestParam.length; ++i)
 		{
 			if (requestParam [i] == null)
