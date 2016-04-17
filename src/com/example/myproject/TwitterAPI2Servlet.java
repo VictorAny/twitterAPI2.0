@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -76,8 +77,12 @@ public class TwitterAPI2Servlet extends HttpServlet {
 		Gson gson = new Gson();
 		String stringBody = getBody(request);
 		Type jsonType = new TypeToken<HashMap<String, Object>>(){}.getType();
+		try {
 		HashMap<String, Object> myMap = gson.fromJson(stringBody, jsonType);
 		return myMap;
+		}catch (IllegalStateException | JsonSyntaxException exception){
+			return null;
+		}
 	}
 	
 	/*

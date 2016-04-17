@@ -12,6 +12,9 @@ import javax.servlet.http.HttpServletResponse;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.Filter;
@@ -30,6 +33,7 @@ public class MessageServlet extends TwitterAPI2Servlet {
 	private String POSTmessageUserIDParam = "user_id";
 	private String POSTmessageTextParam = "text";
 	private String POSTmessageLikesParam = "likes";
+	private String POSTMessageTagParam = "tag";
 	
     public MessageServlet() {
         super();
@@ -46,32 +50,40 @@ public class MessageServlet extends TwitterAPI2Servlet {
 		
 		//Temp. Format Used by the Request Sent by MessageSearch.html
 		//Finalize later
-		String searchTags = request.getParameter("searchByTag");
-		String searchName = request.getParameter("searchByName");
+		String searchTags = request.getParameter("searchByTags");
+		String searchId = request.getParameter("searchById");
 		
-		if (searchTags == null || searchName == null){
+		if (searchTags == null && searchId == null){
 			this.writeErrorResponse(response, "Failed");
 			return;
 		}
 		
 		Gson g = new Gson();
-		
-		
 		Query q;
 		ArrayList<String> returnString = new ArrayList<String>();
 		String jsonReturn = "";
 		boolean fail = true;
 		
 		//if there was a user_id in the query, first filter out all posts NOT made by that user
-		if(!searchName.isEmpty())
+		if(!searchId.isEmpty())
 		{
-			Filter byName = new FilterPredicate("user_id",FilterOperator.EQUAL,searchName);
-			q = new Query("Post").setFilter(byName);
+			Key messageKey = KeyFactory.createKey(this.EntityKind, Integer.parseInt(searchId));
+			Entity postObject;
+			try {
+				postObject = datastore.get(messageKey);
+				Gson json = new Gson();
+				String jsonReturnString = json.toJson(postObject);
+				response.getWriter().println(jsonReturnString);
+				return;
+
+			} catch (EntityNotFoundException e) {
+				this.writeErrorResponse(response, "Error, user does not exist");
+				return;
+			}
 		}
 		else//no user specified, search all posts
 		{
-			q = new Query("Post");
-		}
+		q = new Query("Post");
 		PreparedQuery pq = datastore.prepare(q);
 
 		//further filter the posts by tag
@@ -98,9 +110,9 @@ public class MessageServlet extends TwitterAPI2Servlet {
 		if(fail)
 		{
 			response.getWriter().println("No Messages with That Tag/Username");
+			}
 		}
 	}
-
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		HashMap<String, Object> requestDic = this.getRequestBodyMap(request);
 		//Go through the keys and check for our required parameters.
@@ -108,18 +120,25 @@ public class MessageServlet extends TwitterAPI2Servlet {
 		// Set the post parameters with the required values
 		// Likes should also be set to 0 for a newly created message.
 		
+		if (requestDic == null){
+			this.writeErrorResponse(response, "Invalid JSON params");
+			return;
+		}
+		
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		
 		boolean isValid = true;
 				
-		String[] requestParam = new String [2];
+		String[] requestParam = new String [3];
 		requestParam [0] = (String)requestDic.get(this.POSTmessageUserIDParam);
 		requestParam [1] = (String)requestDic.get(this.POSTmessageTextParam);
+		requestParam [2] = (String)requestDic.get(this.POSTMessageTagParam);
+		
 				
 		long uniqueId = datastore.allocateIds(this.EntityKind, 1).getStart().getId();
 				
 		int likesCount = 0;
-		Entity post = new Entity (this.EntityKind);
+		Entity post = new Entity (this.EntityKind, uniqueId);
 		for (int i = 0; i < requestParam.length; ++i)
 		{
 			if (requestParam [i] == null)
@@ -134,6 +153,7 @@ public class MessageServlet extends TwitterAPI2Servlet {
 			post.setProperty(this.POSTmessageUserIDParam, requestParam[0]);
 			post.setProperty(this.POSTmessageTextParam, requestParam[1]);
 			post.setProperty(this.POSTmessageLikesParam, likesCount);
+			post.setProperty(this.POSTMessageTagParam, requestParam[2]);
 			datastore.put(post);
 			this.writeSucessfulResponse(response, "Post uploaded!");
 		}

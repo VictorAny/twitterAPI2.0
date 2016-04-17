@@ -31,9 +31,10 @@ public class UserServlet extends TwitterAPI2Servlet{
 		DatastoreService datastore = 
                 DatastoreServiceFactory.getDatastoreService();
 		String userID = request.getQueryString();
+		System.out.println(userID);
 		if (userID != null){
 			response.setContentType("application/json");
-			Key userKey = KeyFactory.createKey(UserServlet.UserType, userID);
+			Key userKey = KeyFactory.createKey(UserServlet.UserType, Integer.parseInt(userID));
 			Entity userProfile;
 			try {
 				userProfile = datastore.get(userKey);
@@ -63,7 +64,11 @@ public class UserServlet extends TwitterAPI2Servlet{
 		HashMap<String, Object> requestDict = this.getRequestBodyMap(request);
 		//Take it away!
 		//String requestParam = (String)requestDict.get("name");
-		
+		if (requestDict == null){
+			this.writeErrorResponse(response, "Invalid JSON String");
+			return;
+		}
+		System.out.println("Valid json, now parsing userinformation");
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 	
 		boolean isValid = true;
@@ -75,7 +80,7 @@ public class UserServlet extends TwitterAPI2Servlet{
 		long uniqueId = datastore.allocateIds(UserServlet.UserType, 1).getStart().getId();
 		// A newly created user will have no posts hence the postCount is 0.
 		int postCount = 0;
-		Entity user = new Entity (UserServlet.UserType);
+		Entity user = new Entity (UserServlet.UserType, uniqueId);
 		for (int i = 0; i < requestParam.length; ++i)
 		{
 			if (requestParam [i] == null)
@@ -91,7 +96,7 @@ public class UserServlet extends TwitterAPI2Servlet{
 		user.setProperty(UserServlet.userIDParam, uniqueId);
 		user.setProperty(UserServlet.postCountParam, postCount);
 		datastore.put(user);
-		this.writeSucessfulResponse(response, "User created!");
+		this.writeSucessfulResponse(response, Long.toString(uniqueId));
 		}
 		else
 			this.writeErrorResponse(response, "Invalid request parameters");
